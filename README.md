@@ -1,3 +1,4 @@
+![Screenshot 1](rag-ai-document-chat-workflow.png)
 # Chat with Internal Documents (RAG AI Agent)
 
 Enables context-aware chat over internal documents using n8n, Ollama, and Supabase Vector DB.
