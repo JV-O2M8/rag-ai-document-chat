@@ -1,0 +1,890 @@
+{
+  "name": "rag-ai-document-chat-workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.data || $json.text || $json.concatenated_data }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "=file_id",
+                "value": "={{ $('Set File ID').first().json.file_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "dbb68d41-4989-4377-810e-2e3092d9998a",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        1888,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Agent Tools for RAG",
+        "height": 489,
+        "width": 583,
+        "color": 4
+      },
+      "id": "ff608e47-d4f8-4da5-b950-44330b16e5c4",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Tool to Add a Google Drive File to Vector DB",
+        "height": 627,
+        "width": 2353,
+        "color": 5
+      },
+      "id": "6ba57c49-2d1d-42d0-8d27-af94cd514691",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        528
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Set File ID').item.json.file_id }}"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "id": "aebd3b02-a7ad-4b3a-a386-6764853a1f60",
+      "name": "Download File",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        640,
+        752
+      ],
+      "executeOnce": true,
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1kxxE-cSJYZA1EwRohcgNL2PNFZDzAyhw",
+          "cachedResultUrl": "",
+          "cachedResultName": "test-folder"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "id": "522077aa-239b-4fae-bd81-7ee8a18e56f8",
+      "name": "File Created",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "position": [
+        -128,
+        640
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1kxxE-cSJYZA1EwRohcgNL2PNFZDzAyhw",
+          "cachedResultUrl": "",
+          "cachedResultName": "test-folder"
+        },
+        "event": "fileUpdated",
+        "options": {}
+      },
+      "id": "8d0d935c-1f1e-4515-97d7-b558586fb5b7",
+      "name": "File Updated",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "position": [
+        -128,
+        864
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "id": "e8eb38da-86ec-4763-9f3a-6d0796ba1593",
+      "name": "Extract Document Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        1408,
+        944
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "id": "2b129d6b-70f4-455d-a9de-f569276a6e42",
+      "name": "Postgres Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "position": [
+        560,
+        304
+      ],
+      "notesInFlow": false,
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "documents",
+        "filterType": "string",
+        "filterString": "=metadata->>file_id=like.*{{ $json.file_id }}*"
+      },
+      "id": "3be53fe2-43ae-45f8-84e0-80f51fd7757f",
+      "name": "Delete Old Doc Rows",
+      "type": "n8n-nodes-base.supabase",
+      "position": [
+        400,
+        752
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10646eae-ae46-4327-a4dc-9987c2d76173",
+              "name": "file_id",
+              "type": "string",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "id": "f4536df5-d0b1-4392-bf17-b8137fb31a44",
+              "name": "file_type",
+              "type": "string",
+              "value": "={{ $json.mimeType }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a83d6977-b4b2-4e14-a201-fb06799ff19e",
+      "name": "Set File ID",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        160,
+        752
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "## RAG AI Agent with Chat Interface",
+        "height": 485,
+        "width": 1036
+      },
+      "id": "463572e3-5481-4af6-91d8-e13ee963d209",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "3f237b70-905c-404b-9e19-4d26baf37e84",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        864,
+        80
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9a9a245e-f1a1-4282-bb02-a81ffe629f0f",
+              "name": "chatInput",
+              "type": "string",
+              "value": "={{ $json?.chatInput || $json.body.chatInput || $json.body.message }}"
+            },
+            {
+              "id": "b80831d8-c653-4203-8706-adedfdb98f77",
+              "name": "sessionId",
+              "type": "string",
+              "value": "={{ $json?.sessionId || $json.body.sessionId}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ac70adc1-0435-4290-81f2-6a7c71316ce1",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        304,
+        80
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nMy name is Laki. How can I assist you today?",
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "id": "c752d80d-ffe0-4408-8935-3dc93db51911",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        48,
+        80
+      ],
+      "webhookId": "15e4d662-3f98-48d0-9f50-68838769ecac",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rag-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a5126352-12d7-4864-b556-93ea5fad2e90",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        48,
+        288
+      ],
+      "webhookId": "9ba11544-5c4e-4f91-818a-08a4ecb596c5",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "47dcdc0c-2bdf-4199-8101-a0a25715d8aa",
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        1408,
+        560
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "9bba61dc-183d-44e4-aff3-55492aa28cc4",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "position": [
+        1328,
+        752
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {},
+      "id": "6ae1b0e4-cb7c-49b6-baa4-557e1a3bf168",
+      "name": "Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "position": [
+        1888,
+        1008
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "be22004a-4912-486d-86e2-8e238f1ed59b",
+      "name": "Summarize",
+      "type": "n8n-nodes-base.summarize",
+      "position": [
+        1488,
+        752
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}\n\nContext from retrieved documents:\n{{ $json.user_documents }}\n\nInstructions:\n- Use ONLY the context above to answer the question.\n- If the context already provides the answer, respond directly with that Answer.\n- Do NOT call any tools or offer to call tools if the context already has the answer.\n- Only call tools if the context is empty or obviously incomplete.\n- Keep the answer clear and complete.\n",
+        "options": {
+          "systemMessage": "=You are a helpful assistant that answers user questions. Always prioritize using the provided context. Only call tools when the provided context does not contain the necessary information.\nIf you use the tool then provide the answer coming from the tool directly\n"
+        }
+      },
+      "id": "d31a8bc6-b439-4ee3-b703-3c7ea406e153",
+      "name": "RAG AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        528,
+        80
+      ],
+      "typeVersion": 1.6
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $('Set File ID').item.json.file_type }}",
+                    "rightValue": "application/pdf"
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "2ae7faa7-a936-4621-a680-60c512163034",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $('Set File ID').item.json.file_type }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "fc193b06-363b-4699-a97d-e5a850138b0e",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $('Set File ID').item.json.file_type }}",
+                    "rightValue": "application/vnd.google-apps.document"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 2
+        }
+      },
+      "id": "fa41302e-eb2a-4975-8466-797feeae9ebf",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        864,
+        752
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "documents",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "7860d6d5-7934-4cb2-8385-538f8ccdafe8",
+      "name": "Insert into Supabase Vectorstore",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        1760,
+        560
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "0498f587-5367-4710-9fbe-fa6de8d93e6a",
+      "name": "Extract from Excel",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        1168,
+        752
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "id": "0f9bb2df-3bd3-415d-adfd-0351416459c3",
+      "name": "Embeddings Ollama",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "position": [
+        1728,
+        784
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "id": "a1496122-f1fc-4a25-a653-87ae3a06f7e7",
+      "name": "Embeddings Ollama1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "position": [
+        1248,
+        368
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "documents",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "336213e3-412e-4086-b785-e7c516b3999e",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "position": [
+        1120,
+        224
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:latest",
+        "options": {}
+      },
+      "id": "df5f1268-dbd5-474d-ad2c-e64de6eb80ac",
+      "name": "Ollama Model",
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "position": [
+        1472,
+        272
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:latest",
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "f6e43e7f-b911-48dd-ac50-f6d850ce82ad",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "position": [
+        384,
+        320
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "name": "user_documents",
+        "description": "Contains all the user's documents that you can check for context to answer user questions."
+      },
+      "id": "657cf1fd-6286-4485-ac23-66360170af92",
+      "name": "User_documents",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "position": [
+        1248,
+        64
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Document Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set File ID": {
+      "main": [
+        [
+          {
+            "node": "Delete Old Doc Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Created": {
+      "main": [
+        [
+          {
+            "node": "Set File ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Updated": {
+      "main": [
+        [
+          {
+            "node": "Set File ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "User_documents",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "User_documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from Excel": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Old Doc Rows": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "RAG AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Document Text": {
+      "main": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "User_documents",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "763d32d5-4f06-4572-a235-00b76918dc45",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0f92a3083a45cfc8980f991e8ea0de14b5bc6a6b0d6108ebdf8df4d12109bb6f"
+  },
+  "id": "zM8WnUaqlcHUDkDf",
+  "tags": []
+}
