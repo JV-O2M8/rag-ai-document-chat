@@ -31,6 +31,12 @@ Enables context-aware chat over internal documents using n8n, Ollama, and Supaba
 - Responses stored in PostgreSQL for memory
 
 ## Supabase Setup
-1. Create a Supabase project at https://supabase.com
-2. Create a `documents` table:
+1. Create a Supabase project at https://supabase.com and go to the SQL editor.
+
+2. Create a documents table with the following schema:
+
+id - int8
+content - text
+metadata - jsonb
+embedding - vector
 
